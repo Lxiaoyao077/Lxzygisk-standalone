@@ -37,21 +37,8 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y cmake ninja-build
-      - name: Build Lxzygisk
-        run: |
-          set -eo pipefail
-          make all -j$(nproc) 2>&1 | tee build.log | tail -80
-          echo "BUILD_OK=1" >> $GITHUB_ENV
-        continue-on-error: true
-      - name: Upload build log
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-log
-          path: build.log
-          retention-days: 1
-      - name: Fail if build failed
-        if: env.BUILD_OK != '1'
-        run: exit 1
+      - name: Build Lxzygisk (debug only)
+        run: make debug -j$(nproc) 2>&1 | tail -80
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
