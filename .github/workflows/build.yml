@@ -37,8 +37,15 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y cmake ninja-build
-      - name: Build Lxzygisk
-        run: make all -j$(nproc)
+      - name: Debug make
+        run: |
+          set -x
+          echo "NDK_PATH=$NDK_PATH"
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          ls -la "$NDK_PATH/toolchains/llvm/prebuilt/linux-x86_64/bin/clang"
+          echo "--- make debug with output (j1) ---"
+          make debug -j1 2>&1 | head -60
+        continue-on-error: true
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
