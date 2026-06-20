@@ -28,22 +28,29 @@ jobs:
       - name: Setup NDK
         run: |
           echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
-          echo "NDK_VERSION=27.2.12479018" >> $GITHUB_ENV
           NDK_PATH="$ANDROID_HOME/ndk/27.2.12479018"
           if [ ! -d "$NDK_PATH" ]; then
-            echo "Installing NDK 27.2.12479018..."
-            yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "ndk;27.2.12479018" 2>&1 | tail -5
+            yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "ndk;27.2.12479018"
           fi
           echo "NDK_PATH=$NDK_PATH" >> $GITHUB_ENV
-          ls "$NDK_PATH/toolchains/llvm/prebuilt/linux-x86_64/bin/clang" && echo "NDK clang: OK"
+          echo "=== NDK diagnostics ==="
+          ls -la "$NDK_PATH/toolchains/llvm/prebuilt/linux-x86_64/bin/clang"
+          echo "=== Common.mk NDK settings ==="
+          grep -n "NDK_PATH\|TOOLCHAIN\|CC\|CC_ARCH" common.mk
       - name: Setup CMake and Ninja
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y cmake ninja-build
       - name: Build Lxzygisk
         run: |
-          set -o pipefail
-          make all -j$(nproc) 2>&1 | tail -80
+          set -eo pipefail
+          make all -j$(nproc) 2>&1 | tee build.log | tail -60
+          echo "EXIT: $?"
+      - name: Show errors on failure
+        if: failure()
+        run: |
+          echo "=== grep error/warning ==="
+          grep -iE 'error|fatal|undefined|cannot find' build.log | head -30 || true
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
