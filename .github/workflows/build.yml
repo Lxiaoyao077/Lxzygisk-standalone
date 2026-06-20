@@ -15,6 +15,9 @@ jobs:
       fail-fast: false
       matrix:
         build_type: [debug, release]
+    env:
+      ANDROID_HOME: /usr/local/lib/android/sdk
+      NDK_VERSION: 27.2.12479018
     steps:
       - uses: actions/checkout@v4
         with:
@@ -32,8 +35,18 @@ jobs:
         uses: android-actions/setup-android@v3
         with:
           packages: 'platforms;android-34'
-      - name: Setup NDK path
-        run: echo "NDK_PATH=$ANDROID_NDK_LATEST_HOME" >> $GITHUB_ENV
+      - name: Setup NDK r27c
+        run: |
+          NDK_ZIP="android-ndk-r27c-linux.zip"
+          NDK_URL="https://dl.google.com/android/repository/${NDK_ZIP}"
+          mkdir -p $ANDROID_HOME/ndk
+          if [ ! -d "$ANDROID_HOME/ndk/$NDK_VERSION" ]; then
+            wget -q $NDK_URL
+            unzip -q $NDK_ZIP -d $ANDROID_HOME/ndk/
+            mv $ANDROID_HOME/ndk/android-ndk-r27c $ANDROID_HOME/ndk/$NDK_VERSION
+            rm $NDK_ZIP
+          fi
+          echo "NDK_PATH=$ANDROID_HOME/ndk/$NDK_VERSION" >> $GITHUB_ENV
       - name: Setup CMake and Ninja
         run: |
           sudo apt-get update
