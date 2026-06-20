@@ -32,10 +32,8 @@ jobs:
         uses: android-actions/setup-android@v3
         with:
           packages: 'platforms;android-34'
-      - name: Setup NDK r27c
-        uses: nttld/setup-ndk@v1
-        with:
-          ndk-version: r27c
+      - name: Setup NDK path
+        run: echo "NDK_PATH=$ANDROID_NDK_LATEST_HOME" >> $GITHUB_ENV
       - name: Setup CMake and Ninja
         run: |
           sudo apt-get update
