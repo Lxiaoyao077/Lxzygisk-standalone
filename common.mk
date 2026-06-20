@@ -5,13 +5,14 @@ ARCHS ?= arm64-v8a armeabi-v7a x86 x86_64
 ARCH ?= arm64-v8a
 
 VER_NAME ?= v1.0.0
-VER_CODE ?= $(shell git -C "$(ROOT_DIR)" rev-list HEAD --count 2>/dev/null || echo 1)
+VER_CODE ?= $(shell git -C "$(ROOT_DIR)" rev-list upstream/main --count 2>/dev/null || echo 1)
+VER_CODE2 ?= $(shell git -C "$(ROOT_DIR)" rev-list upstream/main..HEAD --count 2>/dev/null || echo 1)
 COMMIT_HASH ?= $(shell git -C "$(ROOT_DIR)" rev-parse --verify --short HEAD 2>/dev/null || echo unknown)
 
 MIN_APATCH_VERSION ?= 10655
 
-MODULE_ID ?= rezygisk
-MODULE_NAME ?= ReZygisk
+MODULE_ID ?= lxzygisk
+MODULE_NAME ?= Lxzygisk
 
 NDK_VERSION ?= 29.0.13113456
 ANDROID_HOME ?= $(HOME)/Android/Sdk
@@ -38,6 +39,8 @@ TARGET_x86_64 = x86_64-linux-android$(API_LEVEL)
 
 CC_ARCH = $(CC) --target=$(TARGET_$(ARCH)) --sysroot=$(SYSROOT)
 
-NDK_CFLAGS = -DANDROID -fdata-sections -ffunction-sections -funwind-tables \
-	-fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 \
-	-Wformat -Werror=format-security
+NDK_CFLAGS = -DANDROID -fdata-sections -ffunction-sections -funwind-tables 	-fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 	-Wformat -Werror=format-security
+
+NDK_LDFLAGS = -Wl,-build-id=sha1 -Wl,--no-rosegment -Wl,--fatal-warnings 	-Wl,--gc-sections -Wl,-z,nocopyreloc
+
+LOADER_FLAGS = -fPIC -std=c++20 -O3 -flto=thin -Wl,--exclude-libs,ALL
