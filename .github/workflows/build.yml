@@ -33,10 +33,6 @@ jobs:
           fi
           echo "NDK_PATH=$NDK_PATH" >> $GITHUB_ENV
           echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
-      - name: Setup CMake and Ninja
+      - name: Build zygiskd only
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y cmake ninja-build
-      - name: Build loader only
-        run: |
-          make BUILD_TYPE=debug -C loader -j$(nproc) 2>&1 | tail -30
+          make BUILD_TYPE=debug -C zygiskd -j$(nproc) 2>&1 | tail -30
