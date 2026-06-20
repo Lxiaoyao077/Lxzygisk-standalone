@@ -11,7 +11,7 @@ COMMIT_HASH ?= $(shell git -C "$(ROOT_DIR)" rev-parse --verify --short HEAD 2>/d
 
 MIN_APATCH_VERSION ?= 10655
 
-MODULE_ID ?= lxzygisk
+MODULE_ID ?= rezygisk
 MODULE_NAME ?= Lxzygisk
 
 NDK_VERSION ?= 29.0.13113456
