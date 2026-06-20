@@ -14,7 +14,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        arch: [arm64-v8a, armeabi-v7a, x86, x86_64]
         build_type: [debug, release]
     steps:
       - uses: actions/checkout@v4
@@ -41,14 +40,13 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y cmake ninja-build
-      - name: Build Lxzygisk (${{ matrix.arch }} ${{ matrix.build_type }})
-        run: |
-          make BUILD_TYPE=${{ matrix.build_type }} ARCH=${{ matrix.arch }}
+      - name: Build Lxzygisk (${{ matrix.build_type }})
+        run: make ${{ matrix.build_type }} -j$(nproc)
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: Lxzygisk-${{ matrix.arch }}-${{ matrix.build_type }}
-          path: out/${{ matrix.build_type }}/${{ matrix.arch }}/
+          name: Lxzygisk-${{ matrix.build_type }}
+          path: build/out/Lxzygisk-*-${{ matrix.build_type }}.zip
   package:
     needs: build
     runs-on: ubuntu-latest
@@ -63,10 +61,10 @@ jobs:
         run: |
           mkdir -p module
           cp module.prop module/
-          for arch in arm64-v8a armeabi-v7a x86 x86_64; do
-            mkdir -p module/zygisk/$arch
-            cp artifacts/Lxzygisk-$arch-debug/zygisk.so module/zygisk/$arch/ 2>/dev/null || true
-            cp artifacts/Lxzygisk-$arch-release/zygisk.so module/zygisk/$arch/ 2>/dev/null || true
+          for dir in artifacts/Lxzygisk-debug artifacts/Lxzygisk-release; do
+            if [ -d "$dir" ]; then
+              cp $dir/*.zip module/ 2>/dev/null || true
+            fi
           done
           VERSION=$(grep version module.prop | cut -d= -f2)
           cd module && zip -r ../Lxzygisk-v$VERSION-apatch.zip .
