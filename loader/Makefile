@@ -55,7 +55,7 @@ INJECTOR_INCLUDES = -Isrc/include -I$(PLTI_DIR)/src -I$(CSOLOADER_DIR)/include
 .PHONY: all arch clean
 
 all:
-	for arch in $(ARCHS); do                                                                                  \
+	@for arch in $(ARCHS); do                                                                                  \
 		$(MAKE) BUILD_TYPE=$(BUILD_TYPE) BUILD_DIR=$(BUILD_DIR) ARCH=$$arch ZKSU_VERSION=$(ZKSU_VERSION) arch; \
 	done
 
