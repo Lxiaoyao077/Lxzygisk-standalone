@@ -44,10 +44,18 @@ jobs:
       - name: Emit build errors as annotations
         if: always()
         run: |
-          if grep -qiE 'error|fatal|undefined reference|cannot find|No such file' /tmp/build.log; then
+          if grep -qE 'error:|fatal error:|undefined reference' /tmp/build.log; then
             while IFS= read -r line; do
               echo "::error::$line"
-            done < <(grep -iE 'error|fatal|undefined reference|cannot find|No such file' /tmp/build.log | head -20)
+            done < <(grep -E 'error:|fatal error:|undefined reference' /tmp/build.log | head -20)
+          fi
+      - name: Emit build warnings as annotations
+        if: always()
+        run: |
+          if grep -q 'warning:' /tmp/build.log; then
+            while IFS= read -r line; do
+              echo "::warning::$line"
+            done < <(grep 'warning:' /tmp/build.log | head -20)
           fi
       - name: Fail if build failed
         if: steps.build.outputs.BUILD_EXIT != '0'
