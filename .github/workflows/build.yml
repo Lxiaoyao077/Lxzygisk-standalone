@@ -27,16 +27,12 @@ jobs:
           distribution: 'temurin'
       - name: Setup NDK
         run: |
-          echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
           NDK_PATH="$ANDROID_HOME/ndk/27.2.12479018"
           if [ ! -d "$NDK_PATH" ]; then
             yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "ndk;27.2.12479018"
           fi
           echo "NDK_PATH=$NDK_PATH" >> $GITHUB_ENV
-          echo "=== NDK diagnostics ==="
-          ls -la "$NDK_PATH/toolchains/llvm/prebuilt/linux-x86_64/bin/clang"
-          echo "=== Common.mk NDK settings ==="
-          grep -n "NDK_PATH\|TOOLCHAIN\|CC\|CC_ARCH" common.mk
+          echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
       - name: Setup CMake and Ninja
         run: |
           sudo apt-get update -qq
@@ -44,13 +40,18 @@ jobs:
       - name: Build Lxzygisk
         run: |
           set -eo pipefail
-          make all -j$(nproc) 2>&1 | tee build.log | tail -60
-          echo "EXIT: $?"
-      - name: Show errors on failure
-        if: failure()
-        run: |
-          echo "=== grep error/warning ==="
-          grep -iE 'error|fatal|undefined|cannot find' build.log | head -30 || true
+          make all -j$(nproc) 2>&1 | tee build.log | tail -80
+          echo "BUILD_OK=1" >> $GITHUB_ENV
+        continue-on-error: true
+      - name: Upload build log
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
+          retention-days: 1
+      - name: Fail if build failed
+        if: env.BUILD_OK != '1'
+        run: exit 1
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
