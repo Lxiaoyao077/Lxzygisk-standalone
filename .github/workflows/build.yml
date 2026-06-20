@@ -20,19 +20,30 @@ jobs:
         run: |
           git remote add upstream https://github.com/PerformanC/ReZygisk.git
           git fetch upstream main --depth=1
-      - name: Setup NDK path
-        run: echo "NDK_PATH=$ANDROID_NDK_LATEST_HOME" >> $GITHUB_ENV
       - name: Setup JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
+      - name: Setup NDK
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
+          echo "NDK_VERSION=27.2.12479018" >> $GITHUB_ENV
+          NDK_PATH="$ANDROID_HOME/ndk/27.2.12479018"
+          if [ ! -d "$NDK_PATH" ]; then
+            echo "Installing NDK 27.2.12479018..."
+            yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "ndk;27.2.12479018" 2>&1 | tail -5
+          fi
+          echo "NDK_PATH=$NDK_PATH" >> $GITHUB_ENV
+          ls "$NDK_PATH/toolchains/llvm/prebuilt/linux-x86_64/bin/clang" && echo "NDK clang: OK"
       - name: Setup CMake and Ninja
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y cmake ninja-build
       - name: Build Lxzygisk
-        run: make all -j$(nproc)
+        run: |
+          set -o pipefail
+          make all -j$(nproc) 2>&1 | tail -80
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
