@@ -37,29 +37,8 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y cmake ninja-build
-      - name: Build Lxzygisk (debug only)
-        id: build
-        run: make debug -j$(nproc) 2>&1 | tee /tmp/build.log; echo "BUILD_EXIT=${PIPESTATUS[0]}" >> $GITHUB_OUTPUT
-        continue-on-error: true
-      - name: Emit build errors as annotations
-        if: always()
-        run: |
-          if grep -qE 'error:|fatal error:|undefined reference' /tmp/build.log; then
-            while IFS= read -r line; do
-              echo "::error::$line"
-            done < <(grep -E 'error:|fatal error:|undefined reference' /tmp/build.log | head -20)
-          fi
-      - name: Emit build warnings as annotations
-        if: always()
-        run: |
-          if grep -q 'warning:' /tmp/build.log; then
-            while IFS= read -r line; do
-              echo "::warning::$line"
-            done < <(grep 'warning:' /tmp/build.log | head -20)
-          fi
-      - name: Fail if build failed
-        if: steps.build.outputs.BUILD_EXIT != '0'
-        run: exit 1
+      - name: Build Lxzygisk
+        run: make all -j$(nproc)
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
