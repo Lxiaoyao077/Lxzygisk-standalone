@@ -39,20 +39,18 @@ jobs:
           sudo apt-get install -y cmake ninja-build
       - name: Build Lxzygisk (debug only)
         id: build
-        run: |
-          make debug -j$(nproc) 2>&1 | tee /tmp/build.log
-          echo "EXIT_CODE=${PIPESTATUS[0]}" >> $GITHUB_OUTPUT
+        run: make debug -j$(nproc) 2>&1 | tee /tmp/build.log; echo "BUILD_EXIT=${PIPESTATUS[0]}" >> $GITHUB_OUTPUT
         continue-on-error: true
-      - name: Show build log
+      - name: Emit build errors as annotations
         if: always()
         run: |
-          echo 'BUILD LOG (last 100 lines):'
-          echo '============================'
-          tail -100 /tmp/build.log
-          echo '============================'
-          echo "Exit: ${{ steps.build.outputs.EXIT_CODE }}"
+          if grep -qiE 'error|fatal|undefined reference|cannot find|No such file' /tmp/build.log; then
+            while IFS= read -r line; do
+              echo "::error::$line"
+            done < <(grep -iE 'error|fatal|undefined reference|cannot find|No such file' /tmp/build.log | head -20)
+          fi
       - name: Fail if build failed
-        if: steps.build.outputs.EXIT_CODE != '0'
+        if: steps.build.outputs.BUILD_EXIT != '0'
         run: exit 1
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
