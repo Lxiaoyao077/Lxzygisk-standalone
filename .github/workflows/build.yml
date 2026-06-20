@@ -37,62 +37,6 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y cmake ninja-build
-      - name: Build Lxzygisk
-        id: build
+      - name: Build loader only
         run: |
-          set -o pipefail
-          make debug -j1 2>&1 | tee /tmp/build.log | tail -60
-        continue-on-error: true
-      - name: Show errors
-        if: always()
-        run: |
-          echo "::group::Build log last 100 lines"
-          tail -100 /tmp/build.log
-          echo "::endgroup::"
-          echo "::group::Error/warning lines"
-          grep -E 'error:|fatal:|warning:' /tmp/build.log | head -30 || true
-          echo "::endgroup::"
-      - name: Upload artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: Lxzygisk-artifacts
-          path: build/out/
-        continue-on-error: true
-  package:
-    needs: build
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-    steps:
-      - uses: actions/checkout@v4
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts
-      - name: Package APatch module
-        run: |
-          mkdir -p module
-          cp module.prop module/
-          cp -r webroot module/ 2>/dev/null || true
-          cd artifacts/Lxzygisk-artifacts
-          for f in *.zip; do
-            cp "$f" ../../module/ 2>/dev/null || true
-          done
-          cd ../..
-          VERSION=$(grep '^version=' module.prop | cut -d= -f2)
-          cd module && zip -r ../Lxzygisk-v${VERSION}-apatch.zip .
-      - name: Upload release artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: Lxzygisk-apatch-module
-          path: Lxzygisk-*-apatch.zip
-      - name: Create Release
-        if: github.ref == 'refs/heads/main'
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ github.run_number }}
-          name: Lxzygisk Build #${{ github.run_number }}
-          files: Lxzygisk-*-apatch.zip
-          draft: false
-          prerelease: false
-          generate_release_notes: true
+          make BUILD_TYPE=debug -C loader -j$(nproc) 2>&1 | tail -30
